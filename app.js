@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 const app = document.getElementById("app");
 const U = DATA.units;
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -52,7 +52,11 @@ function route() {
   stopSpeak(); clearInterval(examTimer);
   const h = location.hash.replace(/^#\/?/, "") || "";
   const p = h.split("/");
-  document.querySelectorAll("#nav a").forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#/" + p[0]));
+  document.querySelectorAll("#nav a").forEach(a => {
+    const target = a.getAttribute("href").replace(/^#\/?/, "");
+    const active = target === p[0] || (p[0].startsWith("paper") && target === "papers") || (p[0] === "quicktest" && target === "papers");
+    a.classList.toggle("on", active);
+  });
   window.scrollTo(0, 0);
   if (p[0] === "") return home();
   if (p[0] === "lessons") return lessons();
@@ -60,7 +64,11 @@ function route() {
   if (p[0] === "vocab") return vocabPage();
   if (p[0] === "quiz") return vocabQuiz(p[1]);
   if (p[0] === "exam") return examStart();
-  if (p[0] === "paper69") return paperStart();
+  if (p[0] === "papers") return papersHub();
+  if (p[0] === "paper70") return paper70Start();
+  if (p[0] === "paper69") return paper69Start();
+  if (p[0] === "quicktest") return quickTestStart();
+  if (p[0] === "practice-paper") return practicePaper(p[1]);
   if (p[0] === "progress") return progress();
   if (p[0] === "wrong") return wrongPractice();
   home();
@@ -73,21 +81,39 @@ function home() {
   const tq = U.reduce((a, u) => a + u.r.length + u.l.length, 0);
   const res = LS.get("qres", {}); const done = Object.keys(res).length;
   app.innerHTML = `
-  <h1>EPS-TOPIK Korean · 2025</h1>
-  <p class="sub">Standard Textbook පාඩම් 60ම, හැම වචනයක්ම Sinhala meaning එක්ක, සහ exam එක වගේම mock paper.</p>
+  <h1>EPS-TOPIK Korean · 2025/2026</h1>
+  <p class="sub">Standard Textbook පාඩම් 60ම, හැම වචනයක්ම Sinhala meaning එක්ක, සහ CBT අනුමාන විභාග ප්‍රශ්න පත්‍ර.</p>
   <div class="stats">
     <div class="stat"><b>60</b><span>පාඩම්</span></div>
     <div class="stat"><b>${tv}</b><span>වචන (Sinhala + English)</span></div>
-    <div class="stat"><b>${tq}</b><span>EPS-TOPIK practice questions</span></div>
+    <div class="stat"><b>${tq}</b><span>Textbook practice Q</span></div>
+    <div class="stat"><b>90</b><span>අනුමාන ප්‍රශ්න (Guess Q)</span></div>
     <div class="stat"><b>${known}/${tv}</b><span>ඔයා දන්න වචන</span></div>
-    <div class="stat"><b>${done}/${tq}</b><span>practice කරපු questions</span></div>
+    <div class="stat"><b>${done}/${tq}</b><span>practice කළ ප්‍රශ්න</span></div>
   </div>
-  <div class="card"><h2 style="margin-top:0">Mock Exam (සැබෑ exam එක වගේ)</h2>
-    <p class="sub">40 questions · Reading 20 (විනාඩි 25) + Listening 20 (විනාඩි 25) · ලකුණු 100 (එකකට 2.5). අවසානයේ හරි උත්තරත්, හැම question එකකම Sinhala තේරුමත් පෙන්නනවා.</p>
-    <div class="row"><a class="btn" href="#/exam">Mock exam එක පටන් ගන්න</a><a class="btn ghost" href="#/paper69">Paper 69 (Reading)</a></div></div>
+
+  <div class="card" style="border-left: 4px solid var(--pri);">
+    <div class="row" style="margin-bottom:6px;"><span class="tag ok">NEW 2026</span><span class="tag">අනුමාන ප්‍රශ්න</span></div>
+    <h2 style="margin-top:0">CBT අනුමාන ප්‍රශ්න පත්‍ර (Guess Papers)</h2>
+    <p class="sub">EPS-TOPIK CBT ආකෘතියට අනුව Reading සහ Listening ප්‍රශ්න ඇතුළත් සම්පූර්ණ අනුමාන ප්‍රශ්න පත්‍ර.</p>
+    <div class="row">
+      <a class="btn" href="#/paper70">Paper 70 (2026 නව Model Exam)</a>
+      <a class="btn ghost" href="#/quicktest">⚡ Quick Test (ප්‍රශ්න 10)</a>
+      <a class="btn ghost" href="#/paper69">Paper 69 (සම්පූර්ණ 40 Q)</a>
+      <a class="btn ghost" href="#/papers">සියලු Papers →</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0">Random Mock Exam (පාඩම් 60න් අහඹු ප්‍රශ්න)</h2>
+    <p class="sub">පාඩම් 6-60 අතරින් අහඹු ලෙස තෝරාගත් Reading 20 + Listening 20 ප්‍රශ්න 40ක් සහිත විභාගය.</p>
+    <div class="row"><a class="btn" href="#/exam">Mock exam එක පටන් ගන්න</a></div>
+  </div>
+
   <div class="card"><h2 style="margin-top:0">පාඩම් අනුව ඉගෙන ගන්න</h2>
     <p class="sub">පාඩමක් තෝරලා වචන, flashcards, vocab quiz, EPS questions කරන්න.</p>
-    <div class="row"><a class="btn" href="#/lessons">පාඩම් 60</a><a class="btn ghost" href="#/vocab">වචන search</a><a class="btn ghost" href="#/quiz/all">Vocab quiz (සියල්ල)</a></div></div>`;
+    <div class="row"><a class="btn" href="#/lessons">පාඩම් 60</a><a class="btn ghost" href="#/vocab">වචන search</a><a class="btn ghost" href="#/quiz/all">Vocab quiz (සියල්ල)</a></div>
+  </div>`;
 }
 
 /* ---------- lessons ---------- */
@@ -203,13 +229,35 @@ document.addEventListener("click", e => {
 });
 function ansText(item) { const t = item.opts && item.opts[item.ans - 1]; return t ? ` · ${esc(t)}` : ""; }
 
+function renderQuestionContent(item) {
+  let h = "";
+  if (item.title) h += `<div class="qtitle">${esc(item.title)}</div>`;
+  if (item.box) h += `<div class="qbox">${esc(item.box)}</div>`;
+  if (item.img) h += `<img class="qimg" loading="lazy" src="img/${item.img}" alt="question">`;
+  return h;
+}
+
+function renderChoicesHtml(item, selectedChoice) {
+  const hasText = item.opts && item.opts.some(o => o && String(o).trim());
+  if (hasText) {
+    return `<div class="choices textual">${[1, 2, 3, 4].map(c => `
+      <button class="choice ${selectedChoice === c ? "sel" : ""}" data-c="${c}">
+        <span class="cnum">${CIRC[c - 1]}</span>
+        <span class="ctxt">${esc(item.opts[c - 1] || "")}</span>
+      </button>`).join("")}</div>`;
+  }
+  return `<div class="choices">${[1, 2, 3, 4].map(c => `
+    <button class="choice ${selectedChoice === c ? "sel" : ""}" data-c="${c}">${CIRC[c - 1]}</button>`).join("")}</div>`;
+}
+
 /* practice with instant feedback */
 function practiceCards(list, backHref, title) {
   app.innerHTML = `<p><a href="${backHref}">← back</a></p><h1>${title}</h1><p class="sub">Answer එක tap කරාම හරිද වැරදිද කියලා, සිංහල තේරුමත් එක්ක පෙන්නනවා.</p>${voiceWarning()}
-  ${list.map((x, k) => `<div class="card" data-k="${k}"><div class="row"><span class="tag">${x.sec === "r" ? "Reading" : "Listening"}</span><span class="tag">පාඩම ${x.u}</span></div>
-    ${x.sec === "l" ? `<p><button class="btn ghost sm" data-play='${esc(JSON.stringify(x.item.script))}'>🔊 audio</button></p>` : ""}
-    <img class="qimg" loading="lazy" src="img/${x.item.img}" alt="question">
-    <div class="choices">${[1, 2, 3, 4].map(c => `<button class="choice" data-c="${c}">${CIRC[c - 1]}</button>`).join("")}</div><div class="fb"></div></div>`).join("")}`;
+  ${list.map((x, k) => `<div class="card" data-k="${k}"><div class="row"><span class="tag">${x.sec === "r" ? "Reading" : "Listening"}</span><span class="tag">Q ${x.q}</span>${x.u ? `<span class="tag">${esc(x.u)}</span>` : ""}</div>
+    ${x.sec === "l" && x.item.script ? `<p><button class="btn ghost sm" data-play='${esc(JSON.stringify(x.item.script))}'>🔊 audio වාදනය</button></p>` : ""}
+    ${renderQuestionContent(x.item)}
+    ${renderChoicesHtml(x.item, null)}
+    <div class="fb"></div></div>`).join("")}`;
   app.querySelectorAll(".card[data-k]").forEach(card => {
     const x = list[+card.dataset.k]; const fb = card.querySelector(".fb");
     card.querySelectorAll(".choice").forEach(b => b.onclick = () => {
@@ -222,12 +270,12 @@ function practiceCards(list, backHref, title) {
   });
 }
 function practiceUnit(u) {
-  const list = [...u.r.map((item, i) => ({ item, sec: "r", u: u.n, q: i + 1 })), ...u.l.map((item, i) => ({ item, sec: "l", u: u.n, q: i + 1 }))];
+  const list = [...u.r.map((item, i) => ({ item, sec: "r", u: "පාඩම " + u.n, q: i + 1 })), ...u.l.map((item, i) => ({ item, sec: "l", u: "පාඩම " + u.n, q: i + 1 }))];
   practiceCards(list, `#/unit/${u.n}`, `${u.n}. ${esc(u.ko)} · EPS-TOPIK`);
 }
 function wrongPractice() {
   const res = LS.get("qres", {}); const list = [];
-  for (const u of U) for (const sec of "rl") (u[sec] || []).forEach((item, i) => { if (res[keyOf(u.n, sec, i + 1)] === 0) list.push({ item, sec, u: u.n, q: i + 1 }); });
+  for (const u of U) for (const sec of "rl") (u[sec] || []).forEach((item, i) => { if (res[keyOf(u.n, sec, i + 1)] === 0) list.push({ item, sec, u: "පාඩම " + u.n, q: i + 1 }); });
   if (!list.length) { app.innerHTML = `<p><a href="#/progress">← back</a></p><p>වැරදුණු questions නෑ 👍</p>`; return; }
   practiceCards(list, "#/progress", "වැරදුණු questions නැවත");
 }
@@ -247,18 +295,124 @@ function buildMock() {
   return [{ name: "Reading (읽기)", sec: "r", min: 25, qs: pick("r") }, { name: "Listening (듣기)", sec: "l", min: 25, qs: pick("l") }];
 }
 function examStart() {
-  app.innerHTML = `<h1>Mock Exam</h1><p class="sub">EPS-TOPIK (2024+ CBT format): 40 questions, ලකුණු 100, විනාඩි 50.</p>
+  app.innerHTML = `<h1>Mock Exam (Random 40 Q)</h1><p class="sub">EPS-TOPIK CBT format: පාඩම් 6–60 න් අහඹු ලෙස තෝරාගත් ප්‍රශ්න 40ක්, ලකුණු 100, විනාඩි 50.</p>
   <div class="card"><table><tr><td>Reading</td><td>20 Q</td><td>විනාඩි 25</td><td>ලකුණු 50</td></tr><tr><td>Listening</td><td>20 Q</td><td>විනාඩි 25</td><td>ලකුණු 50</td></tr></table>
-  <p class="sub">Question paper එකේ පාඩම් 6–60 වල EPS-TOPIK questions අහඹු ලෙස තෝරනවා. Listening වලට audio browser එකේ Korean voice එකෙන් වාදනය වෙනවා (එක question එකකට 2 වතාවක් වගේ අහන්න පුළුවන්). Exam එක ඉවර වුණාම හරි උත්තර + සිංහල තේරුම් පෙන්නනවා.</p>${voiceWarning()}
+  <p class="sub">Listening වලට audio browser එකේ Korean voice එකෙන් වාදනය වෙනවා (එක question එකකට 2 වතාවක් අහන්න පුළුවන්). Exam එක ඉවර වුණාම හරි උත්තර + සිංහල තේරුම් පෙන්නනවා.</p>${voiceWarning()}
   <button class="btn" id="go">පටන් ගන්න</button></div>`;
   document.getElementById("go").onclick = () => runExam({ title: "Mock Exam", sections: buildMock(), kind: "mock" });
 }
-function paperStart() {
-  app.innerHTML = `<h1>Paper 69 (Reading 1–20)</h1><p class="sub">ඔයා දුන්න "Dream Korean Academy – EPS 2026 Paper 69" එකේ Reading questions 20. විනාඩි 25.</p>
-  <div class="note">මේ PDF එකේ answer key එකක් තිබුණේ නෑ. හරි උත්තර මම (AI) විසඳලා දාපු ඒවා - ගුරුවරයෙකුගෙන් confirm කරගන්න. Q21–40 (Listening) වලට audio / script නැති නිසා ඇතුළත් කළේ නෑ. Q1 (ඔවන්/toaster oven) වගේ picture questions වල උත්තරය 1-2 ක් ගැටලු සහගත වෙන්න පුළුවන්.</div>
-  <div class="card"><button class="btn" id="go">පටන් ගන්න</button></div>`;
-  document.getElementById("go").onclick = () => runExam({ title: "Paper 69 · Reading", kind: "p69", sections: [{ name: "Reading (읽기)", sec: "r", min: 25, qs: DATA.paper69.map(p => ({ item: { img: p.img, ans: p.ans, si: p.si, opts: [] }, sec: "r", u: 0, q: p.q })) }] });
+
+function papersHub() {
+  app.innerHTML = `<h1>අනුමාන විභාග ප්‍රශ්න පත්‍ර (Guess Papers)</h1>
+  <p class="sub">EPS-TOPIK CBT ආකෘතියට අනුව අලුත්ම අනුමාන ප්‍රශ්න සමඟින් සැබෑ විභාග අත්දැකීම ලබාගන්න.</p>
+  <div class="grid">
+    <div class="paper-card">
+      <div>
+        <span class="tag ok badge">★ NEW 2026 CBT</span>
+        <h3>Paper 70 (2026 නව Model Exam)</h3>
+        <p>2026 නව ප්‍රශ්න රටාවට අදාළ උපකරණ, ආරක්ෂක පුවරු, වැටුප් ලේඛන, ප්‍රස්තාර, සහ නීති රීති අඩංගු නව ප්‍රශ්න 40. Reading 20 + Listening 20 (Audio සහිතයි).</p>
+      </div>
+      <div class="row">
+        <a class="btn" href="#/paper70">Exam එක (විනාඩි 50)</a>
+        <a class="btn ghost sm" href="#/practice-paper/70">ක්ෂණික පුහුණුව</a>
+      </div>
+    </div>
+
+    <div class="paper-card">
+      <div>
+        <span class="tag warn badge">Dream Korean 2026</span>
+        <h3>Paper 69 (සම්පූර්ණ පේපර් 40 Q)</h3>
+        <p>Dream Korean Academy Paper 69 හි Reading 20 සහ Listening 20 ප්‍රශ්න 40ම. සියලු Listening ප්‍රශ්න සඳහාම audio script සහ සිංහල තේරුම් ඇතුළත් කර ඇත.</p>
+      </div>
+      <div class="row">
+        <a class="btn" href="#/paper69">Exam එක (විනාඩි 50)</a>
+        <a class="btn ghost sm" href="#/practice-paper/69">ක්ෂණික පුහුණුව</a>
+      </div>
+    </div>
+
+    <div class="paper-card">
+      <div>
+        <span class="tag badge">⚡ Fast Testing</span>
+        <h3>Quick Test (ප්‍රශ්න 10ක ඉක්මන් ටෙස්ට්)</h3>
+        <p>වෙබ් අඩවියේ audio, timer, සහ questions පරීක්ෂා කර බැලීමට සුදුසු මිනිත්තු 12ක ඉක්මන් අනුමාන පරීක්ෂණය (5 Reading + 5 Listening, ලකුණු 25).</p>
+      </div>
+      <div class="row">
+        <a class="btn" href="#/quicktest">ඉක්මන් Test එක</a>
+      </div>
+    </div>
+  </div>`;
 }
+
+function paper70Start() {
+  const qs = DATA.paper70 || [];
+  const rQs = qs.filter(x => x.sec === "r").map(p => ({ item: p, sec: "r", u: 0, q: p.q }));
+  const lQs = qs.filter(x => x.sec === "l").map(p => ({ item: p, sec: "l", u: 0, q: p.q }));
+  app.innerHTML = `<h1>Paper 70 (2026 CBT නව අනුමාන පේපර්)</h1>
+  <p class="sub">EPS-TOPIK 2026 නව ප්‍රශ්න රටාවට අනුව සකසන ලද සම්පූර්ණ අනුමාන විභාගය (Reading 20 + Listening 20).</p>
+  <div class="card"><table><tr><td>Reading (읽기)</td><td>20 Q</td><td>විනාඩි 25</td><td>ලකුණු 50</td></tr><tr><td>Listening (듣기)</td><td>20 Q</td><td>විනාඩි 25</td><td>ලකුණු 50</td></tr></table>
+  <p class="sub">මුළු ලකුණු 100යි (ප්‍රශ්නයකට ලකුණු 2.5). Listening වලට Korean voice audio ස්වයංක්‍රීයව වාදනය වේ (2 වතාවක් අහන්න පුළුවන්). අවසානයේ සියලුම ප්‍රශ්නවලට සිංහල තේරුම් හා නිවැරදි උත්තර ලැබේ.</p>${voiceWarning()}
+  <div class="row"><button class="btn" id="go">Exam එක පටන් ගන්න</button><a class="btn ghost" href="#/practice-paper/70">Practice Mode (ක්ෂණික පිළිතුරු)</a></div></div>`;
+  document.getElementById("go").onclick = () => runExam({
+    title: "Paper 70 · 2026 CBT Model Exam",
+    kind: "p70",
+    sections: [
+      { name: "Reading (읽기)", sec: "r", min: 25, qs: rQs },
+      { name: "Listening (듣기)", sec: "l", min: 25, qs: lQs }
+    ]
+  });
+}
+
+function paper69Start() {
+  const qs = DATA.paper69 || [];
+  const rQs = qs.slice(0, 20).map(p => ({ item: p, sec: "r", u: 0, q: p.q }));
+  const lQs = qs.slice(20, 40).map(p => ({ item: p, sec: "l", u: 0, q: p.q }));
+  app.innerHTML = `<h1>Paper 69 (Dream Korean Academy - සම්පූර්ණ පේපර්)</h1>
+  <p class="sub">Dream Korean Academy 2026 Guess Paper එකේ Reading 20 + Listening 20 ප්‍රශ්න 40ම ඇතුළත් සම්පූර්ණ විභාගය.</p>
+  <div class="card"><table><tr><td>Reading (읽기)</td><td>20 Q</td><td>විනාඩි 25</td><td>ලකුණු 50</td></tr><tr><td>Listening (듣기)</td><td>20 Q</td><td>විනාඩි 25</td><td>ලකුණු 50</td></tr></table>
+  <p class="sub">Listening ප්‍රශ්න 21–40 සඳහා කොරියානු ශබ්ද පරිපාලනය (audio speech) සහ සිංහල විස්තර සහිතයි.</p>${voiceWarning()}
+  <div class="row"><button class="btn" id="go">Exam එක පටන් ගන්න</button><a class="btn ghost" href="#/practice-paper/69">Practice Mode (ක්ෂණික පිළිතුරු)</a></div></div>`;
+  document.getElementById("go").onclick = () => runExam({
+    title: "Paper 69 · Full Exam",
+    kind: "p69",
+    sections: [
+      { name: "Reading (읽기)", sec: "r", min: 25, qs: rQs },
+      { name: "Listening (듣기)", sec: "l", min: 25, qs: lQs }
+    ]
+  });
+}
+
+function quickTestStart() {
+  const qs = DATA.quickTest || [];
+  const rQs = qs.filter((_, i) => i < 5).map((p, i) => ({ item: p, sec: "r", u: 0, q: i + 1 }));
+  const lQs = qs.filter((_, i) => i >= 5).map((p, i) => ({ item: p, sec: "l", u: 0, q: i + 6 }));
+  app.innerHTML = `<h1>ඉක්මන් අනුමාන පරීක්ෂණය (Quick 10-Question Test)</h1>
+  <p class="sub">වෙබ් අඩවියේ විභාග ක්‍රියාකාරීත්වය (Reading, Listening audio, Timer, ලකුණු ගණනය) මිනිත්තු කිහිපයකින් test කිරීමට සකසන ලද විශේෂ අනුමාන ප්‍රශ්න 10කි.</p>
+  <div class="card"><table><tr><td>Reading (읽기)</td><td>5 Q</td><td>විනාඩි 6</td><td>ලකුණු 12.5</td></tr><tr><td>Listening (듣기)</td><td>5 Q</td><td>විනාඩි 6</td><td>ලකුණු 12.5</td></tr></table>
+  <p class="sub">මුළු ලකුණු 25. ප්‍රශ්න 10 අවසානයේ සම්පූර්ණ ලකුණු සහ සිංහල තේරුම් ලැබේ.</p>${voiceWarning()}
+  <button class="btn" id="go">පරීක්ෂණය පටන් ගන්න</button></div>`;
+  document.getElementById("go").onclick = () => runExam({
+    title: "Quick Guess Test (ප්‍රශ්න 10)",
+    kind: "quick",
+    sections: [
+      { name: "Reading (읽기)", sec: "r", min: 6, qs: rQs },
+      { name: "Listening (듣기)", sec: "l", min: 6, qs: lQs }
+    ]
+  });
+}
+
+function practicePaper(paperId) {
+  let list = [];
+  let title = "";
+  if (paperId === "70") {
+    list = (DATA.paper70 || []).map(p => ({ item: p, sec: p.sec, u: "Paper 70", q: p.q }));
+    title = "Paper 70 · අනුමාන ප්‍රශ්න පුහුණුව";
+  } else {
+    list = (DATA.paper69 || []).map((p, i) => ({ item: p, sec: i < 20 ? "r" : "l", u: "Paper 69", q: p.q }));
+    title = "Paper 69 · ප්‍රශ්න 40 පුහුණුව";
+  }
+  practiceCards(list, "#/papers", title);
+}
+
 function runExam(cfg) {
   EX = { cfg, si: 0, qi: 0, ans: cfg.sections.map(s => s.qs.map(() => 0)), plays: cfg.sections.map(s => s.qs.map(() => 0)), end: 0, done: false };
   startSection();
@@ -274,13 +428,12 @@ function startSection() {
 }
 function drawExam() {
   const s = EX.cfg.sections[EX.si], q = s.qs[EX.qi], a = EX.ans[EX.si], left = Math.max(0, Math.round((EX.end - Date.now()) / 1000));
-  const pts = 50 / s.qs.length;
   app.innerHTML = `<div class="timer"><span><b>${esc(EX.cfg.title)}</b> · ${esc(s.name)}</span><b id="tm">${fmt(left)}</b></div>
   <div class="qnav">${s.qs.map((_, i) => `<button class="${a[i] ? "done" : ""} ${i === EX.qi ? "cur" : ""}" data-g="${i}">${i + 1}</button>`).join("")}</div>
   <div class="card"><div class="row"><span class="tag">Question ${EX.qi + 1} / ${s.qs.length}</span></div>
-    ${s.sec === "l" ? `<p><button class="btn" id="pl">🔊 audio ධාවනය (${EX.plays[EX.si][EX.qi]}/2)</button> <span class="sub">${EX.plays[EX.si][EX.qi] >= 2 ? "2 වතාවක් අහලා ඉවරයි" : ""}</span></p>` : ""}
-    <img class="qimg" src="img/${q.item.img}" alt="question ${EX.qi + 1}">
-    <div class="choices">${[1, 2, 3, 4].map(c => `<button class="choice ${a[EX.qi] === c ? "sel" : ""}" data-c="${c}">${CIRC[c - 1]}</button>`).join("")}</div>
+    ${s.sec === "l" && q.item.script ? `<p><button class="btn" id="pl">🔊 audio ධාවනය (${EX.plays[EX.si][EX.qi]}/2)</button> <span class="sub">${EX.plays[EX.si][EX.qi] >= 2 ? "2 වතාවක් අහලා ඉවරයි" : ""}</span></p>` : ""}
+    ${renderQuestionContent(q.item)}
+    ${renderChoicesHtml(q.item, a[EX.qi])}
     <div class="row"><button class="btn ghost" id="pv" ${EX.qi === 0 ? "disabled" : ""}>← Back</button><button class="btn ghost" id="nx" ${EX.qi === s.qs.length - 1 ? "disabled" : ""}>Next →</button><span style="flex:1"></span><button class="btn" id="fin">${EX.si < EX.cfg.sections.length - 1 ? "Reading ඉවරයි → Listening" : "Submit"}</button></div></div>`;
   app.querySelectorAll("[data-g]").forEach(b => b.onclick = () => { stopSpeak(); EX.qi = +b.dataset.g; drawExam(); });
   app.querySelectorAll(".choice").forEach(b => b.onclick = () => { a[EX.qi] = +b.dataset.c; drawExam(); });
@@ -296,30 +449,58 @@ function drawExam() {
 }
 function endSection() {
   stopSpeak(); clearInterval(examTimer);
-  if (EX.si < EX.cfg.sections.length - 1) { EX.si++; app.innerHTML = `<div class="card"><h2>Listening කොටස</h2><p>විනාඩි 25 ක්. Audio එක එක question එකට 2 වතාවක් අහන්න පුළුවන්.</p>${voiceWarning()}<button class="btn" id="go">පටන් ගන්න</button></div>`; document.getElementById("go").onclick = startSection; return; }
+  if (EX.si < EX.cfg.sections.length - 1) {
+    EX.si++;
+    const nextSec = EX.cfg.sections[EX.si];
+    app.innerHTML = `<div class="card"><h2>Listening (듣기) කොටස</h2><p>විනාඩි ${nextSec.min} ක්. Audio එක එක question එකට 2 වතාවක් අහන්න පුළුවන්.</p>${voiceWarning()}<button class="btn" id="go">පටන් ගන්න</button></div>`;
+    document.getElementById("go").onclick = startSection;
+    return;
+  }
   results();
 }
 function results() {
   const sects = EX.cfg.sections; let total = 0, max = 0; const secScore = [];
   const wrong = LS.get("qres", {});
+  const isQuick = EX.cfg.kind === "quick";
+  const ptsPerQ = isQuick ? 2.5 : 2.5;
+
   sects.forEach((s, si) => {
-    const pts = 50 / s.qs.length; let c = 0;
-    s.qs.forEach((q, i) => { const ok = EX.ans[si][i] === q.item.ans; if (ok) c++; if (q.u) wrong[keyOf(q.u, q.sec, q.q)] = ok ? 1 : 0; });
-    secScore.push({ name: s.name, c, n: s.qs.length, p: c * pts }); total += c * pts; max += 50;
+    let c = 0;
+    const pts = isQuick ? 12.5 / s.qs.length : 50 / s.qs.length;
+    s.qs.forEach((q, i) => {
+      const ok = EX.ans[si][i] === q.item.ans;
+      if (ok) c++;
+      if (q.u) wrong[keyOf(q.u, q.sec, q.q)] = ok ? 1 : 0;
+    });
+    secScore.push({ name: s.name, c, n: s.qs.length, p: Math.round(c * pts * 10) / 10 });
+    total += c * pts;
+    max += isQuick ? 12.5 : 50;
   });
+  total = Math.round(total * 10) / 10;
   LS.set("qres", wrong);
-  const hist = LS.get("exams", []); hist.push({ d: Date.now(), kind: EX.cfg.kind, score: total, max: sects.length === 1 ? 50 : 100, parts: secScore.map(x => x.c + "/" + x.n) }); LS.set("exams", hist.slice(-50));
-  const shownMax = sects.length === 1 ? 50 : 100;
-  let html = `<h1>ප්‍රතිඵලය</h1><div class="stats"><div class="stat"><b>${total}/${shownMax}</b><span>මුළු ලකුණු</span></div>${secScore.map(x => `<div class="stat"><b>${x.c}/${x.n}</b><span>${esc(x.name)} · ${x.p}</span></div>`).join("")}</div>
-  ${EX.cfg.kind === "p69" ? `<div class="note">මේ paper එකේ උත්තර AI විසඳපු ඒවා - confirm කරගන්න.</div>` : ""}
-  <div class="row" style="margin:14px 0"><a class="btn" href="#/${EX.cfg.kind === "p69" ? "paper69" : "exam"}" onclick="setTimeout(route,0)">නැවත exam එකක්</a><a class="btn ghost" href="#/progress">Progress</a></div>
+  const hist = LS.get("exams", []);
+  hist.push({ d: Date.now(), kind: EX.cfg.kind, score: total, max: max, parts: secScore.map(x => x.c + "/" + x.n) });
+  LS.set("exams", hist.slice(-50));
+
+  let retakeHash = "exam";
+  if (EX.cfg.kind === "p70") retakeHash = "paper70";
+  else if (EX.cfg.kind === "p69") retakeHash = "paper69";
+  else if (EX.cfg.kind === "quick") retakeHash = "quicktest";
+
+  let html = `<h1>ප්‍රතිඵලය</h1><div class="stats"><div class="stat"><b>${total}/${max}</b><span>මුළු ලකුණු</span></div>${secScore.map(x => `<div class="stat"><b>${x.c}/${x.n}</b><span>${esc(x.name)} · ${x.p} pt</span></div>`).join("")}</div>
+  <div class="row" style="margin:14px 0">
+    <a class="btn" href="#/${retakeHash}" onclick="setTimeout(route,0)">නැවත exam එකක්</a>
+    <a class="btn ghost" href="#/papers">අනුමාන Papers ලැයිස්තුව</a>
+    <a class="btn ghost" href="#/progress">Progress</a>
+  </div>
   <h2>හරි උත්තර + සිංහල තේරුම</h2>`;
+
   sects.forEach((s, si) => {
     html += `<h3>${esc(s.name)}</h3>`;
     s.qs.forEach((q, i) => {
       const my = EX.ans[si][i], ok = my === q.item.ans;
-      html += `<div class="card"><div class="row"><span class="tag">Q${i + 1}</span>${ok ? '<span class="tag ok">හරි ✓</span>' : my ? '<span class="tag bad">වැරදියි</span>' : '<span class="tag warn">උත්තර නැහැ</span>'}${q.u ? `<a class="tag" href="#/unit/${q.u}">පාඩම ${q.u}</a>` : ""}</div>
-      <img class="qimg" loading="lazy" src="img/${q.item.img}" alt="">
+      html += `<div class="card"><div class="row"><span class="tag">Q${i + 1}</span>${ok ? '<span class="tag ok">හරි ✓</span>' : my ? '<span class="tag bad">වැරදියි</span>' : '<span class="tag warn">උත්තර නැහැ</span>'}${q.u ? `<span class="tag">${esc(q.u)}</span>` : ""}</div>
+      ${renderQuestionContent(q.item)}
       <p>ඔයාගේ උත්තරය: <b>${my ? CIRC[my - 1] : "—"}</b> &nbsp; හරි උත්තරය: <b style="color:var(--ok)">${CIRC[q.item.ans - 1]}</b>${ansText(q.item)}</p>${sinBlock(q.item)}</div>`;
     });
   });
@@ -331,12 +512,19 @@ function progress() {
   const ex = LS.get("exams", []), res = LS.get("qres", {}), known = LS.get("known", {});
   const vals = Object.values(res), good = vals.filter(x => x === 1).length, bad = vals.filter(x => x === 0).length;
   const fmtD = t => new Date(t).toLocaleString();
+  const getKindLabel = k => {
+    if (k === "p70") return "Paper 70 (2026 Guess)";
+    if (k === "p69") return "Paper 69 (Full)";
+    if (k === "quick") return "Quick Test (10 Q)";
+    return "Mock Exam";
+  };
   app.innerHTML = `<h1>Progress</h1>
   <div class="stats"><div class="stat"><b>${Object.keys(known).length}</b><span>දන්න වචන</span></div><div class="stat"><b>${good}</b><span>හරි questions</span></div><div class="stat"><b>${bad}</b><span>වැරදුණු questions</span></div><div class="stat"><b>${ex.length}</b><span>exams කළා</span></div></div>
   <div class="row" style="margin:12px 0">${bad ? `<a class="btn" href="#/wrong">වැරදුණු ${bad} නැවත practice</a>` : ""}<button class="btn ghost" id="rs">Progress reset</button></div>
-  <h2>Exam history</h2>${ex.length ? `<div class="card tbl-wrap"><table><thead><tr><th>දිනය</th><th>වර්ගය</th><th>ලකුණු</th><th>කොටස්</th></tr></thead><tbody>${ex.slice().reverse().map(e => `<tr><td>${fmtD(e.d)}</td><td>${e.kind === "p69" ? "Paper 69" : "Mock"}</td><td>${e.score}/${e.max}</td><td>${e.parts.join(" · ")}</td></tr>`).join("")}</tbody></table></div>` : `<p class="sub">තවම exam කරලා නෑ.</p>`}`;
+  <h2>Exam history</h2>${ex.length ? `<div class="card tbl-wrap"><table><thead><tr><th>දිනය</th><th>වර්ගය</th><th>ලකුණු</th><th>කොටස්</th></tr></thead><tbody>${ex.slice().reverse().map(e => `<tr><td>${fmtD(e.d)}</td><td>${esc(getKindLabel(e.kind))}</td><td>${e.score}/${e.max}</td><td>${e.parts.join(" · ")}</td></tr>`).join("")}</tbody></table></div>` : `<p class="sub">තවම exam කරලා නෑ.</p>`}`;
   document.getElementById("rs").onclick = () => { if (confirm("සියලු progress මකන්නද?")) { ["exams", "qres", "known", "vq"].forEach(k => { try { localStorage.removeItem("eps_" + k); } catch (e) { } }); progress(); } };
 }
 
 route();
+
 
