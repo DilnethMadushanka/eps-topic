@@ -65,8 +65,9 @@ function route() {
   if (p[0] === "quiz") return vocabQuiz(p[1]);
   if (p[0] === "exam") return examStart();
   if (p[0] === "papers") return papersHub();
-  if (p[0] === "paper70") return paper70Start();
-  if (p[0] === "paper69") return paper69Start();
+  if (p[0] === "paper") return paperStart(p[1]);
+  if (p[0] === "paper70") return paperStart("70");
+  if (p[0] === "paper69") return paperStart("69");
   if (p[0] === "quicktest") return quickTestStart();
   if (p[0] === "practice-paper") return practicePaper(p[1]);
   if (p[0] === "progress") return progress();
@@ -82,25 +83,25 @@ function home() {
   const res = LS.get("qres", {}); const done = Object.keys(res).length;
   app.innerHTML = `
   <h1>EPS-TOPIK Korean · 2025/2026</h1>
-  <p class="sub">Standard Textbook පාඩම් 60ම, හැම වචනයක්ම Sinhala meaning එක්ක, සහ CBT අනුමාන විභාග ප්‍රශ්න පත්‍ර.</p>
+  <p class="sub">Standard Textbook පාඩම් 60ම, හැම වචනයක්ම Sinhala meaning එක්ක, සහ CBT අනුමාන විභාග ප්‍රශ්න පත්‍ර 30+ (1,280+ Q).</p>
   <div class="stats">
     <div class="stat"><b>60</b><span>පාඩම්</span></div>
     <div class="stat"><b>${tv}</b><span>වචන (Sinhala + English)</span></div>
-    <div class="stat"><b>${tq}</b><span>Textbook practice Q</span></div>
-    <div class="stat"><b>90</b><span>අනුමාන ප්‍රශ්න (Guess Q)</span></div>
+    <div class="stat"><b>32</b><span>CBT Model Papers</span></div>
+    <div class="stat"><b>1,280+</b><span>අනුමාන ප්‍රශ්න (Guess Q)</span></div>
     <div class="stat"><b>${known}/${tv}</b><span>ඔයා දන්න වචන</span></div>
-    <div class="stat"><b>${done}/${tq}</b><span>practice කළ ප්‍රශ්න</span></div>
+    <div class="stat"><b>${done}/${tq}</b><span>Textbook Q practice</span></div>
   </div>
 
   <div class="card" style="border-left: 4px solid var(--pri);">
-    <div class="row" style="margin-bottom:6px;"><span class="tag ok">NEW 2026</span><span class="tag">අනුමාන ප්‍රශ්න</span></div>
-    <h2 style="margin-top:0">CBT අනුමාන ප්‍රශ්න පත්‍ර (Guess Papers)</h2>
-    <p class="sub">EPS-TOPIK CBT ආකෘතියට අනුව Reading සහ Listening ප්‍රශ්න ඇතුළත් සම්පූර්ණ අනුමාන ප්‍රශ්න පත්‍ර.</p>
+    <div class="row" style="margin-bottom:6px;"><span class="tag ok">NEW 2026</span><span class="tag">අනුමාන ප්‍රශ්න පත්‍ර 30+</span></div>
+    <h2 style="margin-top:0">CBT අනුමාන ප්‍රශ්න පත්‍ර (Guess Papers 01–30)</h2>
+    <p class="sub">EPS-TOPIK CBT ආකෘතියට අනුව Reading 20 + Listening 20 ප්‍රශ්න 40 බැගින් වූ සැබෑ CBT අනුමාන ප්‍රශ්න පත්‍ර 30ක් (ප්‍රශ්න 1,200+) සහ ආදර්ශ විභාග.</p>
     <div class="row">
-      <a class="btn" href="#/paper70">Paper 70 (2026 නව Model Exam)</a>
-      <a class="btn ghost" href="#/quicktest">⚡ Quick Test (ප්‍රශ්න 10)</a>
-      <a class="btn ghost" href="#/paper69">Paper 69 (සම්පූර්ණ 40 Q)</a>
-      <a class="btn ghost" href="#/papers">සියලු Papers →</a>
+      <a class="btn" href="#/papers">සියලු Papers 30+ බලන්න →</a>
+      <a class="btn ghost" href="#/paper/1">Paper 01 (නිෂ්පාදන)</a>
+      <a class="btn ghost" href="#/paper70">Paper 70 (Model Exam)</a>
+      <a class="btn ghost" href="#/quicktest">⚡ Quick Test (10 Q)</a>
     </div>
   </div>
 
@@ -302,78 +303,202 @@ function examStart() {
   document.getElementById("go").onclick = () => runExam({ title: "Mock Exam", sections: buildMock(), kind: "mock" });
 }
 
+function getPaperData(id) {
+  const nid = +id;
+  if (nid === 70) return (typeof DATA !== "undefined" && DATA.paper70) ? DATA.paper70 : [];
+  if (nid === 69) return (typeof DATA !== "undefined" && DATA.paper69) ? DATA.paper69 : [];
+  if (typeof window !== "undefined" && window.PAPERS && window.PAPERS[nid]) return window.PAPERS[nid];
+  return [];
+}
+
+function getPaperMeta(id) {
+  const nid = +id;
+  if (typeof window !== "undefined" && window.PAPERS_META && window.PAPERS_META[nid]) return window.PAPERS_META[nid];
+  if (nid === 70) return {
+    id: 70,
+    titleKo: "2026 CBT 실전 모의고사 (Paper 70)",
+    titleSi: "2026 CBT නව Model Exam",
+    descSi: "2026 නව ප්‍රශ්න රටාවට අදාළ උපකරණ, ආරක්ෂක පුවරු, වැටුප් ලේඛන, ප්‍රස්තාර, සහ නීති රීති අඩංගු නව ප්‍රශ්න 40. Reading 20 + Listening 20 (Audio සහිතයි).",
+    cat: "2026 Model",
+    badge: "2026 NEW"
+  };
+  if (nid === 69) return {
+    id: 69,
+    titleKo: "Dream Korean Academy (Paper 69)",
+    titleSi: "Dream Korean Academy 2026 අනුමාන පේපර්",
+    descSi: "Dream Korean Academy Paper 69 හි Reading 20 සහ Listening 20 ප්‍රශ්න 40ම. සියලු Listening ප්‍රශ්න සඳහාම audio script සහ සිංහල තේරුම් ඇතුළත් කර ඇත.",
+    cat: "Dream Korean",
+    badge: "DKA 69"
+  };
+  return {
+    id: nid,
+    titleKo: `모의고사 ${String(nid).padStart(2, "0")}`,
+    titleSi: `අනුමාන Paper ${String(nid).padStart(2, "0")}`,
+    descSi: "EPS-TOPIK CBT ආකෘතියේ ප්‍රශ්න 40ක් සහිත අනුමාන ප්‍රශ්න පත්‍රය.",
+    cat: "Model Exam",
+    badge: `Paper ${nid}`
+  };
+}
+
 function papersHub() {
-  app.innerHTML = `<h1>අනුමාන විභාග ප්‍රශ්න පත්‍ර (Guess Papers)</h1>
-  <p class="sub">EPS-TOPIK CBT ආකෘතියට අනුව අලුත්ම අනුමාන ප්‍රශ්න සමඟින් සැබෑ විභාග අත්දැකීම ලබාගන්න.</p>
-  <div class="grid">
-    <div class="paper-card">
-      <div>
-        <span class="tag ok badge">★ NEW 2026 CBT</span>
-        <h3>Paper 70 (2026 නව Model Exam)</h3>
-        <p>2026 නව ප්‍රශ්න රටාවට අදාළ උපකරණ, ආරක්ෂක පුවරු, වැටුප් ලේඛන, ප්‍රස්තාර, සහ නීති රීති අඩංගු නව ප්‍රශ්න 40. Reading 20 + Listening 20 (Audio සහිතයි).</p>
-      </div>
-      <div class="row">
-        <a class="btn" href="#/paper70">Exam එක (විනාඩි 50)</a>
-        <a class="btn ghost sm" href="#/practice-paper/70">ක්ෂණික පුහුණුව</a>
-      </div>
-    </div>
+  const allIds = [...Array.from({ length: 30 }, (_, i) => i + 1), 70, 69];
+  const exams = LS.get("exams", []);
+  
+  // Find highest score per paper
+  const scoreMap = {};
+  exams.forEach(e => {
+    if (e.kind && e.kind.startsWith("p")) {
+      const pid = +e.kind.slice(1);
+      if (!scoreMap[pid] || e.score > scoreMap[pid]) {
+        scoreMap[pid] = e.score;
+      }
+    }
+  });
 
-    <div class="paper-card">
-      <div>
-        <span class="tag warn badge">Dream Korean 2026</span>
-        <h3>Paper 69 (සම්පූර්ණ පේපර් 40 Q)</h3>
-        <p>Dream Korean Academy Paper 69 හි Reading 20 සහ Listening 20 ප්‍රශ්න 40ම. සියලු Listening ප්‍රශ්න සඳහාම audio script සහ සිංහල තේරුම් ඇතුළත් කර ඇත.</p>
-      </div>
-      <div class="row">
-        <a class="btn" href="#/paper69">Exam එක (විනාඩි 50)</a>
-        <a class="btn ghost sm" href="#/practice-paper/69">ක්ෂණික පුහුණුව</a>
-      </div>
+  app.innerHTML = `<h1>අනුමාන විභාග ප්‍රශ්න පත්‍ර 30+ (CBT Guess Papers)</h1>
+  <p class="sub">EPS-TOPIK 2026 CBT විභාගය සඳහා විශේෂයෙන් සකස් කරන ලද සම්පූර්ණ Model Exam ප්‍රශ්න පත්‍ර 32ක් (Reading 20 + Listening 20 Audio සහිතයි). Passing score 80/100.</p>
+  
+  <div class="filter-bar">
+    <div class="search-box">
+      <input type="search" id="paperSearch" placeholder="🔍 Paper අංකය, මාතෘකාව හෝ වචනයක් search කරන්න (e.g. 16, 용접, රක්ෂණ)..." autofocus>
     </div>
+  </div>
 
-    <div class="paper-card">
-      <div>
-        <span class="tag badge">⚡ Fast Testing</span>
-        <h3>Quick Test (ප්‍රශ්න 10ක ඉක්මන් ටෙස්ට්)</h3>
-        <p>වෙබ් අඩවියේ audio, timer, සහ questions පරීක්ෂා කර බැලීමට සුදුසු මිනිත්තු 12ක ඉක්මන් අනුමාන පරීක්ෂණය (5 Reading + 5 Listening, ලකුණු 25).</p>
-      </div>
-      <div class="row">
-        <a class="btn" href="#/quicktest">ඉක්මන් Test එක</a>
-      </div>
+  <div class="tab-pills" id="paperTabs">
+    <button class="tab-pill on" data-tab="all">සියල්ල (32)</button>
+    <button class="tab-pill" data-tab="p1_10">Papers 01–10 (කර්මාන්ත)</button>
+    <button class="tab-pill" data-tab="p11_20">Papers 11–20 (නීති & රක්ෂණ)</button>
+    <button class="tab-pill" data-tab="p21_30">Papers 21–30 (ජීවිතය & සමාජය)</button>
+    <button class="tab-pill" data-tab="special">Paper 69 & 70</button>
+  </div>
+
+  <div class="grid" id="papersGrid"></div>`;
+
+  let currentTab = "all";
+  let currentSearch = "";
+
+  const renderGrid = () => {
+    const grid = document.getElementById("papersGrid");
+    if (!grid) return;
+    
+    const filtered = allIds.filter(id => {
+      // Tab filter
+      if (currentTab === "p1_10" && (id < 1 || id > 10)) return false;
+      if (currentTab === "p11_20" && (id < 11 || id > 20)) return false;
+      if (currentTab === "p21_30" && (id < 21 || id > 30)) return false;
+      if (currentTab === "special" && id !== 69 && id !== 70) return false;
+      
+      // Search filter
+      if (currentSearch) {
+        const m = getPaperMeta(id);
+        const q = currentSearch.toLowerCase();
+        const str = `${id} ${m.titleKo} ${m.titleSi} ${m.descSi || ""} ${m.cat || ""} ${m.badge || ""}`.toLowerCase();
+        if (!str.includes(q)) return false;
+      }
+      return true;
+    });
+
+    if (!filtered.length) {
+      grid.innerHTML = `<div class="card" style="grid-column: 1 / -1; text-align:center; padding:30px;">
+        <p class="sub" style="font-size:16px;">සෙවුමට ගැළපෙන ප්‍රශ්න පත්‍රයක් හමු නොවීය.</p>
+        <button class="btn ghost sm" id="resetSearch">සෙවුම ඉවත් කරන්න</button>
+      </div>`;
+      const btn = document.getElementById("resetSearch");
+      if (btn) btn.onclick = () => {
+        document.getElementById("paperSearch").value = "";
+        currentSearch = "";
+        renderGrid();
+      };
+      return;
+    }
+
+    grid.innerHTML = filtered.map(id => {
+      const m = getPaperMeta(id);
+      const best = scoreMap[id];
+      let scoreHtml = "";
+      if (best !== undefined) {
+        if (best >= 80) scoreHtml = `<span class="score-pill pass">✓ Pass (${best}/100)</span>`;
+        else scoreHtml = `<span class="score-pill fail">${best}/100</span>`;
+      }
+      const pNumStr = id < 10 ? `Paper 0${id}` : `Paper ${id}`;
+      return `
+      <div class="paper-card">
+        <div>
+          <div class="row" style="margin-bottom:6px;">
+            <span class="tag ${id === 70 ? 'ok' : (id === 69 ? 'warn' : '')} badge">${esc(m.badge || pNumStr)}</span>
+            ${m.cat ? `<span class="paper-cat">${esc(m.cat)}</span>` : ""}
+          </div>
+          ${scoreHtml}
+          <h3>${esc(pNumStr)}: ${esc(m.titleKo)}</h3>
+          <p><b>${esc(m.titleSi)}</b><br><span style="color:var(--mute)">${esc(m.descSi || "Reading 20 + Listening 20 ප්‍රශ්න 40ක් සහිතයි.")}</span></p>
+        </div>
+        <div class="row">
+          <a class="btn" href="#/paper/${id}">Exam එක (විනාඩි 50)</a>
+          <a class="btn ghost sm" href="#/practice-paper/${id}">ක්ෂණික පුහුණුව</a>
+        </div>
+      </div>`;
+    }).join("");
+  };
+
+  // Attach tab events
+  const tabContainer = document.getElementById("paperTabs");
+  if (tabContainer) {
+    tabContainer.querySelectorAll(".tab-pill").forEach(btn => {
+      btn.onclick = () => {
+        tabContainer.querySelectorAll(".tab-pill").forEach(b => b.classList.remove("on"));
+        btn.classList.add("on");
+        currentTab = btn.dataset.tab;
+        renderGrid();
+      };
+    });
+  }
+
+  // Attach search event
+  const sInput = document.getElementById("paperSearch");
+  if (sInput) {
+    sInput.oninput = (e) => {
+      currentSearch = e.target.value.trim();
+      renderGrid();
+    };
+  }
+
+  renderGrid();
+}
+
+function paperStart(paperId) {
+  const pid = +paperId;
+  const m = getPaperMeta(pid);
+  const qs = getPaperData(pid);
+
+  if (!qs || !qs.length) {
+    alert("Paper දත්ත හමු නොවීය.");
+    location.hash = "#/papers";
+    return;
+  }
+
+  const rQs = qs.filter(x => x.sec === "r" || x.q <= 20).map(p => ({ item: p, sec: "r", u: 0, q: p.q }));
+  const lQs = qs.filter(x => x.sec === "l" || x.q > 20).map(p => ({ item: p, sec: "l", u: 0, q: p.q }));
+  const pNumStr = pid < 10 ? `Paper 0${pid}` : `Paper ${pid}`;
+
+  app.innerHTML = `<h1>${esc(pNumStr)} · ${esc(m.titleKo)}</h1>
+  <p class="sub"><b>${esc(m.titleSi)}</b><br>${esc(m.descSi || "")}</p>
+  <div class="card">
+    <table>
+      <tr><td>Reading (읽기)</td><td>${rQs.length} Q</td><td>විනාඩි 25</td><td>ලකුණු 50</td></tr>
+      <tr><td>Listening (듣기)</td><td>${lQs.length} Q</td><td>විනාඩි 25</td><td>ලකුණු 50</td></tr>
+    </table>
+    <p class="sub">මුළු ලකුණු 100යි (ප්‍රශ්නයකට ලකුණු 2.5). Passing marks 80/100. Listening වලට Korean voice audio ස්වයංක්‍රීයව වාදනය වේ (2 වතාවක් අහන්න පුළුවන්). අවසානයේ සියලුම ප්‍රශ්නවලට සිංහල තේරුම් හා නිවැරදි උත්තර ලැබේ.</p>
+    ${voiceWarning()}
+    <div class="row">
+      <button class="btn" id="go">Exam එක පටන් ගන්න (විනාඩි 50)</button>
+      <a class="btn ghost" href="#/practice-paper/${pid}">Practice Mode (ක්ෂණික පිළිතුරු)</a>
+      <a class="btn ghost" href="#/papers">← සියලු Papers</a>
     </div>
   </div>`;
-}
 
-function paper70Start() {
-  const qs = DATA.paper70 || [];
-  const rQs = qs.filter(x => x.sec === "r").map(p => ({ item: p, sec: "r", u: 0, q: p.q }));
-  const lQs = qs.filter(x => x.sec === "l").map(p => ({ item: p, sec: "l", u: 0, q: p.q }));
-  app.innerHTML = `<h1>Paper 70 (2026 CBT නව අනුමාන පේපර්)</h1>
-  <p class="sub">EPS-TOPIK 2026 නව ප්‍රශ්න රටාවට අනුව සකසන ලද සම්පූර්ණ අනුමාන විභාගය (Reading 20 + Listening 20).</p>
-  <div class="card"><table><tr><td>Reading (읽기)</td><td>20 Q</td><td>විනාඩි 25</td><td>ලකුණු 50</td></tr><tr><td>Listening (듣기)</td><td>20 Q</td><td>විනාඩි 25</td><td>ලකුණු 50</td></tr></table>
-  <p class="sub">මුළු ලකුණු 100යි (ප්‍රශ්නයකට ලකුණු 2.5). Listening වලට Korean voice audio ස්වයංක්‍රීයව වාදනය වේ (2 වතාවක් අහන්න පුළුවන්). අවසානයේ සියලුම ප්‍රශ්නවලට සිංහල තේරුම් හා නිවැරදි උත්තර ලැබේ.</p>${voiceWarning()}
-  <div class="row"><button class="btn" id="go">Exam එක පටන් ගන්න</button><a class="btn ghost" href="#/practice-paper/70">Practice Mode (ක්ෂණික පිළිතුරු)</a></div></div>`;
   document.getElementById("go").onclick = () => runExam({
-    title: "Paper 70 · 2026 CBT Model Exam",
-    kind: "p70",
-    sections: [
-      { name: "Reading (읽기)", sec: "r", min: 25, qs: rQs },
-      { name: "Listening (듣기)", sec: "l", min: 25, qs: lQs }
-    ]
-  });
-}
-
-function paper69Start() {
-  const qs = DATA.paper69 || [];
-  const rQs = qs.slice(0, 20).map(p => ({ item: p, sec: "r", u: 0, q: p.q }));
-  const lQs = qs.slice(20, 40).map(p => ({ item: p, sec: "l", u: 0, q: p.q }));
-  app.innerHTML = `<h1>Paper 69 (Dream Korean Academy - සම්පූර්ණ පේපර්)</h1>
-  <p class="sub">Dream Korean Academy 2026 Guess Paper එකේ Reading 20 + Listening 20 ප්‍රශ්න 40ම ඇතුළත් සම්පූර්ණ විභාගය.</p>
-  <div class="card"><table><tr><td>Reading (읽기)</td><td>20 Q</td><td>විනාඩි 25</td><td>ලකුණු 50</td></tr><tr><td>Listening (듣기)</td><td>20 Q</td><td>විනාඩි 25</td><td>ලකුණු 50</td></tr></table>
-  <p class="sub">Listening ප්‍රශ්න 21–40 සඳහා කොරියානු ශබ්ද පරිපාලනය (audio speech) සහ සිංහල විස්තර සහිතයි.</p>${voiceWarning()}
-  <div class="row"><button class="btn" id="go">Exam එක පටන් ගන්න</button><a class="btn ghost" href="#/practice-paper/69">Practice Mode (ක්ෂණික පිළිතුරු)</a></div></div>`;
-  document.getElementById("go").onclick = () => runExam({
-    title: "Paper 69 · Full Exam",
-    kind: "p69",
+    title: `${pNumStr} · ${m.titleKo}`,
+    kind: "p" + pid,
     sections: [
       { name: "Reading (읽기)", sec: "r", min: 25, qs: rQs },
       { name: "Listening (듣기)", sec: "l", min: 25, qs: lQs }
@@ -382,7 +507,7 @@ function paper69Start() {
 }
 
 function quickTestStart() {
-  const qs = DATA.quickTest || [];
+  const qs = (typeof DATA !== "undefined" && DATA.quickTest) ? DATA.quickTest : [];
   const rQs = qs.filter((_, i) => i < 5).map((p, i) => ({ item: p, sec: "r", u: 0, q: i + 1 }));
   const lQs = qs.filter((_, i) => i >= 5).map((p, i) => ({ item: p, sec: "l", u: 0, q: i + 6 }));
   app.innerHTML = `<h1>ඉක්මන් අනුමාන පරීක්ෂණය (Quick 10-Question Test)</h1>
@@ -401,16 +526,24 @@ function quickTestStart() {
 }
 
 function practicePaper(paperId) {
-  let list = [];
-  let title = "";
-  if (paperId === "70") {
-    list = (DATA.paper70 || []).map(p => ({ item: p, sec: p.sec, u: "Paper 70", q: p.q }));
-    title = "Paper 70 · අනුමාන ප්‍රශ්න පුහුණුව";
-  } else {
-    list = (DATA.paper69 || []).map((p, i) => ({ item: p, sec: i < 20 ? "r" : "l", u: "Paper 69", q: p.q }));
-    title = "Paper 69 · ප්‍රශ්න 40 පුහුණුව";
+  const pid = +paperId;
+  const m = getPaperMeta(pid);
+  const qs = getPaperData(pid);
+
+  if (!qs || !qs.length) {
+    alert("Paper දත්ත හමු නොවීය.");
+    location.hash = "#/papers";
+    return;
   }
-  practiceCards(list, "#/papers", title);
+
+  const pNumStr = pid < 10 ? `Paper 0${pid}` : `Paper ${pid}`;
+  const list = qs.map(p => ({
+    item: p,
+    sec: p.sec || (p.q <= 20 ? "r" : "l"),
+    u: pNumStr,
+    q: p.q
+  }));
+  practiceCards(list, "#/papers", `${pNumStr} · ${m.titleSi}`);
 }
 
 function runExam(cfg) {
@@ -483,9 +616,8 @@ function results() {
   LS.set("exams", hist.slice(-50));
 
   let retakeHash = "exam";
-  if (EX.cfg.kind === "p70") retakeHash = "paper70";
-  else if (EX.cfg.kind === "p69") retakeHash = "paper69";
-  else if (EX.cfg.kind === "quick") retakeHash = "quicktest";
+  if (EX.cfg.kind === "quick") retakeHash = "quicktest";
+  else if (EX.cfg.kind && EX.cfg.kind.startsWith("p")) retakeHash = "paper/" + EX.cfg.kind.slice(1);
 
   let html = `<h1>ප්‍රතිඵලය</h1><div class="stats"><div class="stat"><b>${total}/${max}</b><span>මුළු ලකුණු</span></div>${secScore.map(x => `<div class="stat"><b>${x.c}/${x.n}</b><span>${esc(x.name)} · ${x.p} pt</span></div>`).join("")}</div>
   <div class="row" style="margin:14px 0">
@@ -513,9 +645,14 @@ function progress() {
   const vals = Object.values(res), good = vals.filter(x => x === 1).length, bad = vals.filter(x => x === 0).length;
   const fmtD = t => new Date(t).toLocaleString();
   const getKindLabel = k => {
-    if (k === "p70") return "Paper 70 (2026 Guess)";
-    if (k === "p69") return "Paper 69 (Full)";
     if (k === "quick") return "Quick Test (10 Q)";
+    if (k === "mock") return "Mock Exam (Random 40)";
+    if (k && k.startsWith("p")) {
+      const pid = +k.slice(1);
+      const m = getPaperMeta(pid);
+      const pNum = pid < 10 ? `0${pid}` : `${pid}`;
+      return `Paper ${pNum} · ${m.titleSi || m.titleKo}`;
+    }
     return "Mock Exam";
   };
   app.innerHTML = `<h1>Progress</h1>

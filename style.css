@@ -57,9 +57,22 @@ select{width:auto}
 .choices.textual .choice.bad .cnum{color:var(--bad)}
 .qtitle{font-weight:700;font-size:16px;color:var(--ink);margin:10px 0 8px;line-height:1.4;font-family:"Noto Sans KR",system-ui,sans-serif}
 .qbox{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:10px 0;font-family:"Noto Sans KR",sans-serif;line-height:1.7;white-space:pre-wrap;font-size:15px}
-.paper-card{display:flex;flex-direction:column;justify-content:space-between;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;transition:border-color .2s}
-.paper-card:hover{border-color:var(--pri)}
+.paper-card{display:flex;flex-direction:column;justify-content:space-between;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;transition:border-color .2s,box-shadow .2s;position:relative}
+.paper-card:hover{border-color:var(--pri);box-shadow:0 4px 16px rgba(0,0,0,0.06)}
 .paper-card .badge{align-self:flex-start;margin-bottom:8px}
-.paper-card h3{margin:0 0 6px;font-size:18px}
+.paper-card h3{margin:0 0 6px;font-size:18px;color:var(--ink);line-height:1.4}
 .paper-card p{margin:0 0 14px;color:var(--mute);font-size:14px;line-height:1.5}
+.paper-card .paper-cat{font-size:12px;color:var(--mute);margin-bottom:6px;font-weight:600}
+.paper-card .score-pill{font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;margin-bottom:8px;display:inline-block}
+.paper-card .score-pill.pass{background:var(--okbg);color:var(--ok);border:1px solid var(--ok)}
+.paper-card .score-pill.fail{background:var(--warnbg);color:var(--warn);border:1px solid var(--warn)}
+.filter-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:16px 0 20px}
+.search-box{flex:1;min-width:240px;position:relative}
+.search-box input{width:100%;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit}
+.search-box input:focus{border-color:var(--pri);outline:none}
+.tab-pills{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.tab-pill{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 14px;cursor:pointer;font:600 13px inherit;transition:all .15s}
+.tab-pill:hover{border-color:var(--pri);color:var(--pri)}
+.tab-pill.on{background:var(--pri);color:var(--pri-ink);border-color:var(--pri)}
+
 
